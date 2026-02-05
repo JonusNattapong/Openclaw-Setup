@@ -85,6 +85,12 @@ Multi-account support: use `channels.telegram.accounts` with per-account tokens 
 - `/newbot` creates the bot and returns the token (keep it secret).
 - If a token leaks, revoke/regenerate it via @BotFather and update your config.
 
+**⚠️ Security Warning (2026):** 
+- อย่า expose bot token ใน client-side code หรือ public repositories
+- เก็บ token ใน environment variables หรือ secure config เท่านั้น
+- Bot token ที่ถูก compromise สามารถถูกใช้ส่ง spam หรือ abuse ได้
+- ใช้ token rotation เป็นประจำเพื่อความปลอดภัย
+
 ### Group message visibility (Privacy Mode)
 
 Telegram bots default to **Privacy Mode**, which limits which group messages they receive.

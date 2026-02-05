@@ -34,9 +34,13 @@ If you have multiple profiles, pass `--browser-profile <name>` (the default is `
 
 ## X/Twitter: recommended flow
 
+**2026 Update:** Twitter/X API เปลี่ยนเป็น paid plans
+
+- **Free Tier:** Limited access, rate limits สูง, เหมาะสำหรับ development/testing
+- **Paid Plans:** Required สำหรับ production use, higher rate limits, full API access
 - **Read/search/threads:** use the **bird** CLI skill (no browser, stable).
   - Repo: https://github.com/steipete/bird
-- **Post updates:** use the **host** browser (manual login).
+- **Post updates:** use the **host** browser (manual login) หรือ upgrade to paid API plan
 
 ## Sandboxing + host browser access
 

@@ -8,6 +8,10 @@ title: "Signal"
 
 # Signal (signal-cli)
 
+**⚠️ Unofficial Implementation** - Signal ไม่มี official API สำหรับ bots
+
+คล้าย WhatsApp - ใช้เบอร์โทรศัพท์และ QR code แต่ **เสี่ยงถูกแบนสูง** เพราะ Signal เข้มงวดกับ third-party access
+
 Status: external CLI integration. Gateway talks to `signal-cli` over HTTP JSON-RPC + SSE.
 
 ## Quick setup (beginner)

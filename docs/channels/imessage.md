@@ -8,6 +8,8 @@ title: iMessage
 
 # iMessage (legacy: imsg)
 
+**⚠️ Unofficial Implementation** - iMessage ไม่มี official API สำหรับ bots
+
 > **Recommended:** Use [BlueBubbles](/channels/bluebubbles) for new iMessage setups.
 >
 > The `imsg` channel is a legacy external-CLI integration and may be removed in a future release.

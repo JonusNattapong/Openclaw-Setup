@@ -37,12 +37,19 @@ openclaw plugins install ./extensions/line
    https://developers.line.biz/console/
 2. Create (or pick) a Provider and add a **Messaging API** channel.
 3. Copy the **Channel access token** and **Channel secret** from the channel settings.
+   - **Channel Access Token**: Long-lived token (ไม่หมดอายุ) - เหมาะสำหรับ production
+   - **Channel Secret**: ใช้สำหรับ webhook verification
 4. Enable **Use webhook** in the Messaging API settings.
 5. Set the webhook URL to your gateway endpoint (HTTPS required):
 
 ```
 https://gateway-host/line/webhook
 ```
+
+**⚠️ Token Security (2026):** 
+- Channel Access Token เป็น long-lived - เก็บรักษาให้ปลอดภัย
+- อย่า expose token ใน client-side code หรือ public repositories
+- ใช้ token rotation เป็นประจำเพื่อความปลอดภัย
 
 The gateway responds to LINE’s webhook verification (GET) and inbound events (POST).
 If you need a custom path, set `channels.line.webhookPath` or

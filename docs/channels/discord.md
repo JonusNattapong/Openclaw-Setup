@@ -98,7 +98,16 @@ Discord blocks “privileged intents” unless you explicitly enable them.
 In **Bot** → **Privileged Gateway Intents**, enable:
 
 - **Message Content Intent** (required to read message text in most guilds; without it you’ll see “Used disallowed intents” or the bot will connect but not react to messages)
+  - **2026 Update:** Bots with >100 servers require privileged intent approval from Discord Developer Portal
+  - Bots ≤100 servers can toggle in portal without approval
 - **Server Members Intent** (recommended; required for some member/user lookups and allowlist matching in guilds)
+  - **2026 Update:** Requires privileged intent approval for all bot sizes
+
+**⚠️ Privileged Intents Approval (2026):**
+- Bots >100 servers: Must submit use case to Discord for approval
+- Bots ≤100 servers: Can enable directly in portal
+- Without approval, privileged intents will be disabled
+- Use slash commands and interactions as alternative to reduce intent dependency
 
 You usually do **not** need **Presence Intent**. Setting the bot's own presence (`setPresence` action) uses gateway OP3 and does not require this intent; it is only needed if you want to receive presence updates about other guild members.
 

@@ -22,6 +22,8 @@
 4. BotFather จะส่ง HTTP API token กลับมา (รูปแบบ: `123456789:AAAbcDefGHiJkLmNopQrStUvWxYz`)
 5. คัดลอก token นี้และเก็บไว้ปลอดภัย
 
+**⚠️ คำเตือนความปลอดภัย:** อย่าใช้ token นี้ใน client-side code (เช่น frontend JavaScript) เพราะใครก็ copy ได้จะควบคุม bot ได้ทั้งหมด
+
 ### การตั้งค่าเพิ่มเติม (แนะนำ)
 
 หลังสร้าง bot แล้ว สามารถตั้งค่าเพิ่มเติมได้:
@@ -59,9 +61,21 @@ export TELEGRAM_BOT_TOKEN="your_token_here"
 2. คลิก **New Application** และป้อนชื่อ (เช่น "OpenClaw Bot")
 3. ในแท็บ **Bot** คลิก **Add Bot** เพื่อสร้าง bot user
 4. ในส่วน **Token** คลิก **Reset Token** ถ้าจำเป็น และ **Copy** เพื่อคัดลอก bot token
-5. ใน **Privileged Gateway Intents** เปิดใช้งาน:
-   - **Message Content Intent** (จำเป็นสำหรับอ่านเนื้อหาข้อความ)
-   - **Server Members Intent** (สำหรับค้นหาสมาชิกและ allowlists)
+
+#### ⚠️ Privileged Gateway Intents (สำคัญ - อัปเดต 2026)
+
+หลังสร้าง bot แล้ว ในแท็บ **Bot** → **Privileged Gateway Intents**:
+
+- **Message Content Intent** → **จำเป็นสำหรับอ่านข้อความทั่วไป** (ยกเว้นข้อความที่ mention bot หรือ DM)
+  - **สำหรับ bot ใน ≤ 100 servers:** สามารถเปิดได้เลย (toggle ใน portal)
+  - **สำหรับ bot ใน > 100 servers:** ต้องยื่นขอ **privileged intent approval** ผ่าน Developer Portal
+    - ใช้เวลาหลายสัปดาห์ และต้องอธิบาย use case ชัดเจน
+    - อาจถูก reject ถ้า use case ไม่เพียงพอ
+    - **แนะนำ:** ใช้ slash commands หรือ interactions แทนการอ่านทุกข้อความ
+
+- **Server Members Intent** → เปิดได้เลยสำหรับดึงรายชื่อสมาชิก/allowlists (ไม่ต้อง approval)
+
+**คำแนะนำ 2026:** ถ้าเป็น bot ส่วนตัว → เปิด intents ได้เลย | ถ้าต้องการ scale → ออกแบบ UX รอบ interactions
 
 ### การ Invite Bot เข้า Server
 
@@ -98,9 +112,17 @@ export DISCORD_BOT_TOKEN="your_token_here"
 
 ## WhatsApp
 
-WhatsApp ไม่ใช้ API key แบบ traditional แต่ใช้ระบบ QR code login แทน
+WhatsApp มี 2 วิธีการตั้งค่า: **ไม่เป็นทางการ** (สำหรับ dev/test) และ **เป็นทางการ** (สำหรับ production)
 
-### ขั้นตอนการตั้งค่า
+### ⚠️ คำเตือนสำคัญ
+- **วิธีไม่เป็นทางการ:** เสี่ยงถูก Meta แบน ถ้าใช้งานหนักหรือตรวจพบ pattern แปลกๆ
+- **วิธีเป็นทางการ:** แนะนำสำหรับ production จริงจัง มีค่าใช้จ่าย
+
+### วิธีไม่เป็นทางการ (Unofficial - สำหรับ Dev/Test เท่านั้น)
+
+ใช้ระบบ QR code login ผ่าน multi-device API (คล้าย WhatsApp Web):
+
+#### ขั้นตอนการตั้งค่า
 
 1. **เตรียมเบอร์โทรศัพท์:**
    - **แนะนำ:** ใช้เบอร์แยกต่างหาก (เช่น eSIM หรือเบอร์สำรอง)
@@ -108,7 +130,7 @@ WhatsApp ไม่ใช้ API key แบบ traditional แต่ใช้ร�
 
 2. **รันคำสั่ง login:**
    ```bash
-   openclaw channels login
+   openclaw channels login whatsapp
    ```
 
 3. **สแกน QR code:**
@@ -120,12 +142,14 @@ WhatsApp ไม่ใช้ API key แบบ traditional แต่ใช้ร�
    - WhatsApp จะแสดง "OpenClaw" เป็น device ที่เชื่อมต่อ
    - Credentials จะถูกเก็บใน `~/.openclaw/credentials/whatsapp/`
 
-### การตั้งค่าเพิ่มเติม
+#### การตั้งค่าเพิ่มเติม
 
 ```json
 {
   "channels": {
     "whatsapp": {
+      "enabled": true,
+      "type": "unofficial",
       "dmPolicy": "allowlist",
       "allowFrom": ["+66812345678"],
       "selfChatMode": false
@@ -134,13 +158,56 @@ WhatsApp ไม่ใช้ API key แบบ traditional แต่ใช้ร�
 }
 ```
 
-**selfChatMode:** ตั้งเป็น `true` ถ้าใช้เบอร์ส่วนตัว
+### วิธีเป็นทางการ (Official - แนะนำสำหรับ Production)
+
+ใช้ **WhatsApp Business Platform API** ผ่าน Business Solution Provider (BSP):
+
+#### ขั้นตอนการตั้งค่า
+
+1. **เลือก BSP และสมัคร:**
+   - Meta Official (metaforwhatsapp.com)
+   - Twilio, 360dialog, MessageBird, Gupshup, etc.
+   - ต้องมี verified business account
+
+2. **สร้าง WhatsApp Business Account:**
+   - ได้ Phone Number ID, Business Account ID
+   - ได้ Permanent Access Token
+
+3. **ตั้งค่า Webhook:**
+   - ใน BSP dashboard ป้อน webhook URL ชี้มาที่ OpenClaw server
+   - ตั้งค่า verify token สำหรับ security
+
+4. **เปิดใช้งาน Cloud API หรือ On-Premises API**
+
+#### การใช้งานใน OpenClaw
+
+```json
+{
+  "channels": {
+    "whatsapp": {
+      "enabled": true,
+      "type": "official",
+      "accessToken": "YOUR_PERMANENT_ACCESS_TOKEN",
+      "phoneNumberId": "123456789012345",
+      "businessAccountId": "987654321098765",
+      "webhookVerifyToken": "your_random_verify_string",
+      "dmPolicy": "pairing"
+    }
+  }
+}
+```
+
+หรือใช้ environment variables:
+```bash
+export WHATSAPP_ACCESS_TOKEN="your_permanent_token"
+export WHATSAPP_PHONE_NUMBER_ID="123456789012345"
+export WHATSAPP_BUSINESS_ACCOUNT_ID="987654321098765"
+```
 
 ### ความปลอดภัย
 
-- ใช้เบอร์แยกเพื่อแยกการใช้งานส่วนตัวและ bot
-- ตรวจสอบ Linked Devices เป็นประจำ
-- ออกจาก device ที่ไม่ใช้แล้ว
+- **Official:** มี rate limits ชัดเจน, monitoring tools, compliance ดี
+- **Unofficial:** ใช้เบอร์แยกเพื่อแยกการใช้งานส่วนตัวและ bot, ตรวจสอบ Linked Devices เป็นประจำ, ออกจาก device ที่ไม่ใช้แล้ว
 
 ## Slack
 
@@ -245,7 +312,9 @@ export MATTERMOST_URL="https://your-server.com"
 
 ### Signal
 
-คล้าย WhatsApp - ใช้เบอร์โทรศัพท์และ QR code:
+**⚠️ Unofficial Implementation** - Signal ไม่มี official API สำหรับ bots
+
+คล้าย WhatsApp - ใช้เบอร์โทรศัพท์และ QR code แต่ **เสี่ยงถูกแบนสูง** เพราะ Signal เข้มงวดกับ third-party access
 
 ```bash
 openclaw channels login
@@ -256,6 +325,8 @@ openclaw channels login
 2. รันคำสั่ง login ใน OpenClaw
 3. สแกน QR code ด้วย Signal บนโทรศัพท์
 4. ยืนยันการเชื่อมต่อ
+
+**แนะนำ:** ใช้สำหรับ dev/test เท่านั้น - ไม่เหมาะสำหรับ production
 
 **การตั้งค่าเพิ่มเติม:**
 ```json
@@ -272,6 +343,8 @@ openclaw channels login
 
 ### iMessage
 
+**⚠️ Unofficial Implementation** - iMessage ไม่มี official API สำหรับ bots
+
 สำหรับ macOS เท่านั้น - ไม่ต้อง token เพิ่มเติม แต่ต้องตั้งค่า permissions ใน System Preferences
 
 **ขั้นตอนการตั้งค่า:**
@@ -279,6 +352,8 @@ openclaw channels login
 2. เพิ่ม OpenClaw หรือ Terminal เข้าไป
 3. เปิด **Messages** → **Preferences** → **iMessage** → เปิดใช้งาน
 4. รัน `openclaw channels login` เพื่อ sync
+
+**ข้อจำกัด:** ทำงานได้เฉพาะบน macOS ที่มี Messages app ติดตั้ง
 
 ### LINE
 
@@ -292,7 +367,25 @@ openclaw channels login
    - **Channel description:** คำอธิบาย
    - **Category:** เลือกที่เหมาะสม
 5. ในแท็บ **Messaging API** → **Channel access token**
-6. คลิก **Issue** เพื่อสร้าง token
+
+#### ⚠️ ประเภท Channel Access Token (อัปเดต 2026)
+
+LINE มี 3 ประเภท token:
+
+- **Long-lived channel access token** (แนะนำสำหรับ production)
+  - ไม่หมดอายุ (คงอยู่ตลอดจนกว่าจะ revoke)
+  - Issue ได้ใน console → คลิก **Issue** ใน Channel access token section
+  - **ใช้สำหรับ bot จริงจัง**
+
+- **Short-lived channel access token** (หมดอายุ 30 วัน)
+  - ใช้ OAuth flow สำหรับ user-specific access
+
+- **User-specified / Stateless** (หมดอายุ 15 นาที)
+  - ไม่ค่อยใช้สำหรับ bot ทั่วไป
+
+**แนะนำ:** ใช้ **Long-lived channel access token** สำหรับ OpenClaw
+
+6. คลิก **Issue** เพื่อสร้าง long-lived token
 7. คัดลอก **Channel Access Token** (รูปแบบยาว)
 
 #### การตั้งค่า Webhook
@@ -368,6 +461,15 @@ openclaw channels login
 5. เลือก Instagram account ที่ต้องการเชื่อมต่อ
 6. คัดลอก **App ID** และ **App Secret**
 
+#### ⚠️ ข้อจำกัด Instagram API (2026)
+
+**Instagram Basic Display API** มีข้อจำกัดสูง - เหมาะแค่ personal use:
+- อ่านได้เฉพาะ media ของ account ที่ authorize เท่านั้น
+- **ไม่สามารถส่ง DM หรือ interact กับ inbox ได้**
+- ไม่เหมาะสำหรับ business bot จริงจัง
+
+**สำหรับ Instagram messaging:** ใช้ **Instagram Messaging API** (ผ่าน Messenger API เดียวกัน) แต่ต้องมี verified business และ approval
+
 #### การสร้าง Access Token
 
 1. ไป **Instagram Basic Display** → **User Token Generator**
@@ -396,8 +498,18 @@ openclaw channels login
 1. ไป [Twitter Developer Portal](https://developer.twitter.com/)
 2. สมัคร developer account (ต้อง verify identity)
 3. สร้าง project และ app ใหม่
-4. ใน **App permissions** เลือก **Read and Write**
+4. ใน **App permissions** เลือก **Read and Write** (สำหรับ DM และ posting)
 5. ใน **Authentication settings** เปิดใช้งาน OAuth 2.0
+
+#### ⚠️ Twitter/X API v2 Requirements (2026)
+
+**สำคัญ:** Twitter/X API v2 ต้องมี **paid plan** สำหรับฟีเจอร์ส่วนใหญ่:
+
+- **Free Tier:** จำกัดมาก (1,500 tweets/month, ไม่มี DM access)
+- **Basic Plan:** ~$100/month - สำหรับ DM และ moderate usage
+- **Pro/Enterprise:** สำหรับ high-volume bots
+
+**แนะนำ:** ถ้าต้องการ DM หรือ posting จริงจัง → ต้องมี paid plan
 
 #### การสร้าง API Keys
 
@@ -620,11 +732,18 @@ curl -X POST 'https://id.twitch.tv/oauth2/token' \
 
 ## Best Practices สำหรับแต่ละ Platform
 
+### หลักการทั่วไป (2026 Update)
+- **ใช้ Official API สำหรับ Production เท่านั้น** - Unofficial methods เสี่ยงถูกแบนหรือหยุดทำงาน
+- **ตรวจสอบ Rate Limits และ Verification Requirements** - โดยเฉพาะ Meta platforms, Discord, Twitter/X
+- **Implement Token Rotation** - สำหรับ long-term security
+- **Monitor API Usage** - เตรียมพร้อมสำหรับ quota และ costs
+
 ### Telegram
 - ใช้ bot แยกต่างหากสำหรับแต่ละ use case
 - ตั้งค่า `/setcommands` เพื่อให้ user เข้าใจคำสั่ง
 - เปิดใช้งาน group privacy mode เพื่อความปลอดภัย
 - ใช้ webhooks แทน polling สำหรับ high-traffic bots
+- **อย่าบาง token ใน frontend code** - เก็บใน backend เท่านั้น
 
 ### Discord
 - ใช้ bot permissions เฉพาะที่จำเป็น (Principle of Least Privilege)
@@ -934,23 +1053,39 @@ fi
 
 #### Telegram
 - **403 Forbidden:** ตรวจสอบ bot token และ permissions
-- **429 Too Many Requests:** Implement rate limiting
+- **429 Too Many Requests:** Implement rate limiting (30 msg/sec limit)
 - **400 Bad Request:** ตรวจสอบ message format
+- **⚠️ 2026:** Bot API มี rate limits ที่เข้มงวดขึ้น
 
 #### Discord
 - **401 Unauthorized:** Token หมดอายุหรือไม่ถูกต้อง
-- **403 Forbidden:** Bot permissions ไม่เพียงพอ
-- **429 Rate Limited:** รอและ retry ด้วย backoff
+- **403 Forbidden:** Bot permissions ไม่เพียงพอ หรือ privileged intents ไม่ได้ approval
+- **429 Rate Limited:** รอและ retry ด้วย backoff (global rate limit: 50 requests/sec)
+- **⚠️ 2026:** สำหรับ bot >100 servers ต้องมี privileged intent approval
+
+#### WhatsApp
+- **Unofficial:** Connection อาจหลุดบ่อย, เสี่ยงถูกแบน
+- **Official:** ตรวจสอบ webhook signature, rate limits (250 msg/day free tier)
+- **Error 100:** Invalid parameter format
+- **⚠️ 2026:** Meta เข้มงวดกับ unofficial implementations มากขึ้น
 
 #### Slack
 - **invalid_auth:** Tokens ไม่ถูกต้อง
 - **missing_scope:** เพิ่ม scopes ที่ขาด
 - **account_inactive:** Workspace inactive
+- **Socket Mode:** ดีที่สุดสำหรับ security (ไม่ต้องเปิด public endpoint)
 
 #### Facebook Messenger
 - **100 Invalid parameter:** ตรวจสอบ parameter format
 - **200 Permissions error:** เพิ่ม permissions
-- **613 Rate limited:** Implement backoff
+- **613 Rate limited:** Implement backoff (200 msg/sec limit)
+- **⚠️ 2026:** ต้องมี verified business account สำหรับ production
+
+#### LINE
+- **Webhook signature invalid:** ตรวจสอบ channel secret
+- **Rate limited:** 500 requests/minute สำหรับ free tier
+- **Token expired:** ใช้ long-lived token แทน short-lived
+- **⚠️ 2026:** LINE API มี migration requirements บางส่วน
 
 ### Debug Tools และ Logs
 
